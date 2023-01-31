@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
+const min = parseInt(process.argv[process.argv.length - 2]);
+const max = parseInt(process.argv[process.argv.length - 1]);
+
 const port = 3333;
 
 export const getRandomInt = (min: number, max: number): number => {
@@ -13,17 +16,17 @@ export const getRandomInt = (min: number, max: number): number => {
 express()
   .use(bodyParser.json())
   .use(cors())
-  .use('*', (req, res) => {
-    const randomInt = getRandomInt(5, 60);
+  .post('*', (req, res) => {
+    const randomInt = getRandomInt(min, max);
     const { body = {} } = req;
     let payload: string;
     if(!body.method) {
-      payload = 'OK';
+      return res.sendStatus(400);
     } else if(body.method === 'eth_blockNumber') {
       payload = JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
-        result: '0xfc3877',
+        result: '0xfc38c6',
       });
     } else {
       payload = JSON.stringify({
@@ -55,9 +58,13 @@ express()
       });
     }
     setTimeout(() => {
+      res.type('application/json');
       res.status(200);
-      res.send(payload);
+      res.send(JSON.parse(payload));
     }, randomInt);
+  })
+  .use((req, res) => {
+    res.sendStatus(404);
   })
   .listen(port, () => {
     console.log(`eth-node-simulator listening on port ${port}`);
